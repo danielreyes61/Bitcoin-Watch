@@ -6,10 +6,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var btcPrice = ""
     var ltcPrice = ""
     var ethPrice = ""
+    var xmrPrice = ""
     let statusItem = NSStatusBar.system.statusItem(withLength:NSStatusItem.variableLength)
     let btcMenuItem = NSMenuItem(title: "BTC:", action: nil, keyEquivalent: "")
     let ltcMenuItem = NSMenuItem(title: "LTC:", action: nil, keyEquivalent: "")
     let ethMenuItem = NSMenuItem(title: "ETH:", action: nil, keyEquivalent: "")
+    let xmrMenuItem = NSMenuItem(title: "XMR:", action: nil, keyEquivalent: "")
 
 
     func constructMenu() {
@@ -19,6 +21,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(ltcMenuItem)
             menu.addItem(NSMenuItem.separator())
             menu.addItem(ethMenuItem)
+            menu.addItem(NSMenuItem.separator())
+            menu.addItem(xmrMenuItem)
             menu.addItem(NSMenuItem.separator())
             menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
             statusItem.menu = menu
@@ -30,7 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.action = #selector(getUpdates)
             
         }
-        _ = Timer.scheduledTimer(timeInterval: 3.0, target: self, selector: #selector(getUpdates), userInfo: nil, repeats: true)
+        _ = Timer.scheduledTimer(timeInterval: 8.0, target: self, selector: #selector(getUpdates), userInfo: nil, repeats: true)
 
         constructMenu()
     }
@@ -39,6 +43,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         getBTC()
         getLTC()
         getETH()
+        getXMR()
     }
     
     @objc func getBTC() {
@@ -58,7 +63,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         btcMenuItem.title = "BTC: " + btcPrice
-        statusItem.button?.title = btcPrice
         task.resume()
     }
     
@@ -101,6 +105,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         ethMenuItem.title = "ETH: " + self.ethPrice
         task.resume()
     }
+    
+    @objc func getXMR() {
+        let urlString = "https://poloniex.com/public?command=returnTicker"
+        let session = URLSession(configuration: URLSessionConfiguration.default)
+        let request = URLRequest(url: URL(string: urlString)!)
+        let task: URLSessionDataTask = session.dataTask(with: request) { (receivedData, response, error) -> Void in
+            if let data = receivedData {
+                var jsonResponse : [String:AnyObject]?
+                do {
+                    jsonResponse = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.allowFragments) as? [String:AnyObject]
+                }
+                catch {
+                    print("Caught exception")
+                }
+                self.xmrPrice = jsonResponse!["XMR_BTCD"]!["highestBid"]!! as! String
+            }
+        }
+        xmrMenuItem.title = "XMR: " + self.xmrPrice
+        statusItem.button?.title = xmrPrice
+
+        task.resume()
+    }
+    
     
     func applicationWillTerminate(_ aNotification: Notification) {
     }
